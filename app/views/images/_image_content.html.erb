@@ -1,0 +1,53 @@
+<div id="image-carousel" class="carousel slide" data-interval="false">
+  <div class="carousel-inner">
+    <% @images.each_with_index do |img, index| %>
+        <div class="carousel-item <%= 'active' if @image == img %>">
+          <div class="card m-auto" style="width: 18rem;">
+              <%= image_tag url_for(img.picture), class: "d-block card-img-top"%>
+          </div>
+        </div>
+    <% end %>
+  </div>
+  <a class="carousel-control-prev" href="#image-carousel" role="button" data-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="sr-only">Previous</span>
+  </a>
+  <a class="carousel-control-next" href="#image-carousel" role="button" data-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="sr-only">Next</span>
+  </a>
+</div>
+<div class="fixed-buttons">
+  <% @images.each_with_index do |img, index| %>
+    <div class="card buttons-card" id="buttons-card-<%= index %>">
+      <div class="card-body p-0 text-center" id="annotate-block-<%= index %>">
+        <button type="button" class="card-link annotate-button btn btn-outline-secondary m-3" data-toggle="modal" data-target="#annotate-modal-<%= index %>" data-image-id="<%= img.id %>">
+            Annotate
+        </button>
+        <%= link_to 'Edit', edit_image_path(img), class: "m-3 btn btn-outline-secondary" %>
+        <%= link_to 'Delete', image_path(img), method: :delete, data: { confirm: "Are you sure?" }, class: "m-3 btn btn-outline-secondary" %>
+      </div>
+    </div>
+  <% end %>
+</div>
+ <%= render 'images/annotation_modal' %>
+
+<script>
+  function synchronizeButtons() {
+    const activeIndex = $('.carousel-item.active').index();
+    console.log(activeIndex)
+    $('.buttons-card').hide();
+    $(`#buttons-card-${activeIndex}`).show();
+  }
+
+  $(document).ready(function() {
+    synchronizeButtons();
+  });
+  $('#image-carousel').on('slid.bs.carousel', function () {
+    synchronizeButtons();
+  });
+  $('#image-modal').on('show.bs.modal', function() {
+    synchronizeButtons();
+  });
+</script>
+

@@ -1,0 +1,49 @@
+<%= image_tag url_for(@image.picture), class: "d-block", height: "300px" %>
+
+<%= form_with(model: @image, local: true) do |f| %>
+  <div class="input-group mb-3 mt-3">
+        <div class="input-group-prepend">
+            <span class="input-group-text">Upload</span>
+        </div>
+        <div class="custom-file">
+            <%= f.file_field :picture, class: "custom-file-input", id: "inputGroupFile01" %>
+            <label class="custom-file-label" for="inputGroupFile01">Choose image</label>
+        </div>
+  </div>
+  
+  <% if @image.annotations.present? %>
+    <%= fields_for :annotations, @image.annotations do |af| %>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Key</th>
+            <th scope="col">Value</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @image.annotations.each_with_index do |annotation, index| %>
+            <tr>
+              <td style="display: none">
+                <%= f.text_field "annotations[#{index}][id]", value: annotation.id, readonly: true %>
+              </td>
+              <td>
+                <%= f.text_field "annotations[#{index}][key]", value: annotation.key %>
+              </td>
+              <td>
+                <%= f.text_field "annotations[#{index}][value]", value: annotation.value %>
+              </td>
+              <td>
+                <%= link_to 'Delete', delete_key_image_path(image: @image, key: annotation.id), class: "m-3", method: :delete, data: { confirm: "Are you sure?" } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  <% end %>
+
+  <%= f.submit 'Update Image', class: "btn btn-outline-success" %>
+
+  <%= link_to 'Back to images', images_path, class: "btn btn-outline-secondary" %>
+<% end %>
