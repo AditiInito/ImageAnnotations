@@ -1,0 +1,136 @@
+<% @images.each_with_index do |img, index| %>
+  <div class="modal fade annotate-modal" id="annotate-modal-<%= index %>" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalLabel">Add Annotation</h5>
+        </div>
+        <div class="modal-body">
+          <div class="d-block text-center">
+            <button type="button" class="btn btn-primary add-annotation-btn add-annotation-btn-<%=index%>" data-index="<%=index%>">Add Annotations</button>
+          </div>
+          <div class="annotation-fields-<%=index%> annotation-fields" data-index="<%=index%>">
+              
+          </div>
+          <button type="button" id="add-key-value-button" class="btn btn-primary" data-modal-index="<%= index %>" data-image-id="<%= img.id %>">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<script>
+  $(document).ready(function() {
+    const csrfToken = $('meta[name="csrf-token"]').attr('content');
+
+    $("body").on('click', '.add-annotation-btn', function(){
+      const record_index=$(this).data('index')
+      var annotationDiv = $('<div>', {
+        class: 'annotation-inputs',
+        html: `
+          <div class="row mb-2 mt-2">
+            <div class="col">
+              <input type="text" name="annotation[][key]" class="form-control" placeholder="Enter Key">
+            </div>
+            <div class="col">
+              <input type="text" name="annotation[][value]" class="form-control" placeholder="Enter Value">
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-secondary add-annotations mr-2">Add annotation Field</button>
+          <button type="button" class="btn btn-outline-secondary remove-annotations mr-2">Remove Field</button>
+        `
+      });
+      annotationDiv.appendTo(`.annotation-fields-${record_index}`);
+      $(`.add-annotation-btn-${record_index}`).hide()
+    })
+
+    $("body").on('click', '.add-annotations', function(){
+      const inputs = $(this).closest('.annotation-inputs');
+      const keyInput = inputs.find('.form-control[name="annotation[][key]"]');
+      const valueInput = inputs.find('.form-control[name="annotation[][value]"]');
+      if(keyInput.val()===''){
+        keyInput.addClass('is-invalid');
+      } else if(valueInput.val() === ''){
+        valueInput.addClass('is-invalid');
+      } else {
+        const clone = inputs.clone();
+        inputs.find('.form-control').removeClass('is-invalid');
+        clone.find('.form-control').val('').removeClass('is-invalid');
+        inputs.after(clone);
+      }
+    })
+
+    $("body").on('click', '.remove-annotations', function(){
+      const inputs = $(this).closest('.annotation-inputs');
+      const field = $(this).closest('.annotation-fields')
+      console.log(field)
+      inputs.remove();
+      const elementCount = $('.annotation-inputs').length;
+      if(elementCount==0){$(`.add-annotation-btn`).show()}
+    })
+
+    $(document).on('click', '#add-key-value-button', function() {
+      const record_id = $(this).data('image-id');
+      
+      const modal = $(this).closest('.modal'); 
+      const annotations = [];
+      let isValid=true;
+      modal.find('.annotation-inputs').each(function() {
+        const keyInput = $(this).find('input[name="annotation[][key]"]');
+        const valueInput = $(this).find('input[name="annotation[][value]"]');
+        const key = keyInput.val();
+        const value = valueInput.val();
+        if (key === '') {
+          keyInput.addClass('is-invalid');
+          isValid=false;
+        } else {
+          keyInput.removeClass('is-invalid');
+        }
+        if (value === '') {
+          valueInput.addClass('is-invalid');
+          isValid=false;
+        } else {
+          valueInput.removeClass('is-invalid');
+        }
+        if (key !== '' && value !== '') {
+          annotations.push({ key: key, value: value });
+        }
+      });
+
+      if(isValid){
+        const requestData = {
+          annotations: annotations
+        };
+
+        $.ajax({
+          type: 'POST',
+          url: `/images/${record_id}/add_metadata`,
+          data: requestData,
+          dataType: 'json',
+          headers: { 'X-CSRF-Token': csrfToken },
+          success: function(response) {
+              if (response.status === 'success') {
+                  modal.find($('.modal-body')).prepend(`<div class="alert alert-success">Keys Added</div>`);
+                  modal.find($('.annotation-inputs')).remove()
+                  $(`.add-annotation-btn`).show()
+              } else {
+                  modal.find($('.modal-body')).prepend(`<div class="alert alert-danger">${response.message}</div>`);
+                  modal.find($('.annotation-inputs')).remove()
+                  $(`.add-annotation-btn`).show()
+              }
+
+              setTimeout(function() {
+                  $('.modal-body .alert').fadeOut('slow', function() {
+                      $(this).remove();
+                  });
+              }, 3000);
+          },
+          failure: function(response) {
+            console.log(response.message)
+          },
+        });
+      }
+    });
+
+  });
+</script>
