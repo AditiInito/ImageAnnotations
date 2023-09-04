@@ -1,0 +1,58 @@
+<button type="button" id="annotations" class="btn btn-outline-secondary">Add annotation</button>
+<div id="annotation-inputs">
+    
+</div>
+
+<script>
+  $(document).ready(function() {
+    $('#inputGroupFile01').on('change', function(e){
+        const fileName = e.target.files[0].name;
+        $('.custom-file-label').text(fileName);
+    })
+    $("body").on('click', '#annotations', function(){
+        $('#annotation-inputs').show()
+        var annotationDiv = $('<div>', {
+          class: 'annotation-field',
+          html: `
+            <div class="row mb-2 mt-2">
+              <div class="col">
+                <input type="text" name="annotation[][key]" class="form-control" placeholder="Enter Key">
+              </div>
+              <div class="col">
+                <input type="text" name="annotation[][value]" class="form-control" placeholder="Enter Value">
+              </div>
+              <button type="button" class="btn btn-outline-secondary add-annotations mr-2">Add annotation Field</button>
+              <button type="button" class="btn btn-outline-secondary remove-annotations mr-2">Remove Field</button>
+            </div>
+          `
+        });
+        annotationDiv.appendTo('#annotation-inputs');
+        $('#annotations').hide()
+    })
+    $("body").on('click', '.add-annotations', function(){
+      const inputs = $(this).closest('.annotation-field');
+      const keyInput = inputs.find('.form-control[name="annotation[][key]"]');
+      const valueInput = inputs.find('.form-control[name="annotation[][value]"]');
+      if (keyInput.val()==='' && valueInput.val() === ''){
+        keyInput.addClass('is-invalid');
+        valueInput.addClass('is-invalid');
+      } else if(keyInput.val()===''){
+        keyInput.addClass('is-invalid');
+      } else if(valueInput.val() === ''){
+        valueInput.addClass('is-invalid');
+      } else {
+        const clone = inputs.clone();
+        inputs.find('.form-control').removeClass('is-invalid');
+        clone.find('.form-control').val('').removeClass('is-invalid');
+        inputs.after(clone);
+      }
+    })
+    $("body").on('click', '.remove-annotations', function(){
+      const inputs = $(this).closest('.annotation-field');
+      inputs.remove();
+      const elementCount = $('.annotation-field').length;
+      if(elementCount==0){$('#annotations').show()}
+    })
+  });
+</script>
+ 
